@@ -1,0 +1,11 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+*.swp
+*.swo
+*~
+
+# 機密情報を含む可能性のあるファイル（必要に応じて追加）
+# private/
