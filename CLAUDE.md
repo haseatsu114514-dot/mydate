@@ -51,6 +51,9 @@
 | [profile/personality.md](profile/personality.md) | 性格・価値観・強み弱み |
 | [career/current.md](career/current.md) | 現在の仕事の状況 |
 | [career/direction.md](career/direction.md) | キャリアの方向性・悩み |
+| [career/side-business.md](career/side-business.md) | 副業せどり・転売の全体戦略 |
+| [career/shisha-resale.md](career/shisha-resale.md) | シーシャ機材転売のプレイブック |
+| [tools/shisha-flip.html](tools/shisha-flip.html) | シーシャ転売管理システム（仕入れ判断・在庫・損益） |
 | [skills/inventory.md](skills/inventory.md) | スキル一覧 |
 | [life/romance.md](life/romance.md) | 恋愛の状況・相談履歴 |
 | [life/tasks.md](life/tasks.md) | やらなきゃいけないことリスト |

@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shisha Flip — シーシャ機材 転売管理</title>
+<style>
+:root{
+  --page:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --muted:#898781;
+  --grid:#e1e0d9; --baseline:#c3c2b7; --border:rgba(11,11,11,0.10);
+  --accent:#2a78d6; --accent-deep:#1c5cab; --accent-soft:#cde2fb;
+  --neg:#e34948; --good:#0ca30c; --good-text:#006300; --warn:#fab219; --serious:#ec835a; --crit:#d03b3b;
+  --radius:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --page:#0d0d0d; --surface:#1a1a19; --ink:#ffffff; --ink2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --baseline:#383835; --border:rgba(255,255,255,0.10);
+    --accent:#3987e5; --accent-deep:#6da7ec; --accent-soft:#184f95;
+    --neg:#e66767; --good-text:#0ca30c;
+  }
+}
+:root[data-theme="dark"]{
+  --page:#0d0d0d; --surface:#1a1a19; --ink:#ffffff; --ink2:#c3c2b7; --muted:#898781;
+  --grid:#2c2c2a; --baseline:#383835; --border:rgba(255,255,255,0.10);
+  --accent:#3987e5; --accent-deep:#6da7ec; --accent-soft:#184f95;
+  --neg:#e66767; --good-text:#0ca30c;
+}
+:root[data-theme="light"]{
+  --page:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --muted:#898781;
+  --grid:#e1e0d9; --baseline:#c3c2b7; --border:rgba(11,11,11,0.10);
+  --accent:#2a78d6; --accent-deep:#1c5cab; --accent-soft:#cde2fb;
+  --neg:#e34948; --good-text:#006300;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);
+  font-family:system-ui,-apple-system,"Segoe UI","Hiragino Kaku Gothic ProN","Noto Sans JP",Meiryo,sans-serif;
+  font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:760px;margin:0 auto;padding:16px 14px 90px}
+header.app h1{font-size:20px;margin:4px 0 2px;letter-spacing:.01em}
+header.app .tag{color:var(--ink2);font-size:13px;margin:0 0 12px}
+.tabs{display:flex;gap:2px;position:sticky;top:0;z-index:20;background:var(--page);
+  padding:8px 0;border-bottom:1px solid var(--grid);margin-bottom:16px}
+.tabs button{flex:1;appearance:none;border:0;background:transparent;color:var(--ink2);
+  font:inherit;font-size:13px;padding:8px 2px;cursor:pointer;border-bottom:2px solid transparent}
+.tabs button.on{color:var(--ink);font-weight:700;border-bottom-color:var(--accent)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px;margin-bottom:14px}
+.card h2{font-size:15px;margin:0 0 10px}
+.card h3{font-size:13px;color:var(--ink2);margin:14px 0 6px}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px}
+.kpi .lbl{font-size:11px;color:var(--muted);letter-spacing:.04em}
+.kpi .val{font-size:22px;font-weight:700;margin-top:2px}
+.kpi .sub{font-size:12px;color:var(--ink2)}
+.kpi .up{color:var(--good-text)} .kpi .down{color:var(--neg)}
+label{display:block;font-size:12px;color:var(--ink2);margin:10px 0 3px}
+input,select,textarea{width:100%;font:inherit;font-size:15px;color:var(--ink);
+  background:var(--page);border:1px solid var(--baseline);border-radius:8px;padding:8px 10px}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.hint{font-size:11.5px;color:var(--muted);margin-top:4px}
+.btn{appearance:none;font:inherit;font-size:14px;font-weight:600;border-radius:8px;cursor:pointer;
+  padding:9px 14px;border:1px solid var(--baseline);background:var(--surface);color:var(--ink)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.small{font-size:12.5px;padding:5px 10px;font-weight:500}
+.btn.danger{color:var(--crit);border-color:var(--crit)}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.result{background:var(--page);border:1px dashed var(--baseline);border-radius:8px;padding:12px;margin-top:14px}
+.result table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.result td{padding:3px 0;font-size:14px}
+.result td:last-child{text-align:right;font-weight:600}
+.verdict{display:inline-flex;align-items:center;gap:6px;font-weight:700;border-radius:999px;
+  padding:4px 12px;font-size:14px;margin-top:8px;border:1.5px solid}
+.v-best{color:var(--good-text);border-color:var(--good)}
+.v-ok{color:var(--good-text);border-color:var(--good)}
+.v-thin{color:var(--ink);border-color:var(--warn)}
+.v-no{color:var(--crit);border-color:var(--crit)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.chips button{appearance:none;font:inherit;font-size:12.5px;border-radius:999px;cursor:pointer;
+  padding:4px 12px;border:1px solid var(--baseline);background:var(--surface);color:var(--ink2)}
+.chips button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--ink);font-weight:600}
+.item{border:1px solid var(--border);border-radius:var(--radius);padding:11px 12px;margin-bottom:10px;background:var(--surface)}
+.item .top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.item .name{font-weight:700;font-size:14.5px}
+.item .price{font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
+.badges{display:flex;gap:5px;flex-wrap:wrap;margin:5px 0}
+.badge{font-size:10.5px;border:1px solid var(--baseline);color:var(--ink2);border-radius:5px;padding:1px 7px}
+.badge.st-stock{border-color:var(--muted)}
+.badge.st-listed{border-color:var(--accent);color:var(--accent)}
+.badge.st-sold{border-color:var(--good);color:var(--good-text)}
+.badge.profit-plus{border-color:var(--good);color:var(--good-text);font-weight:700}
+.badge.profit-minus{border-color:var(--crit);color:var(--crit);font-weight:700}
+.item .meta{font-size:12px;color:var(--muted)}
+.item .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.panel{border-top:1px dashed var(--baseline);margin-top:10px;padding-top:6px}
+.empty{color:var(--muted);font-size:13.5px;text-align:center;padding:24px 8px}
+table.flat{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+table.flat th{font-size:11px;color:var(--muted);text-align:left;font-weight:600;
+  border-bottom:1px solid var(--grid);padding:4px 6px 4px 0}
+table.flat td{border-bottom:1px solid var(--grid);padding:6px 6px 6px 0;vertical-align:top}
+table.flat td.num,table.flat th.num{text-align:right;padding-right:0}
+.scroller{overflow-x:auto}
+.notice{border:1px solid var(--warn);border-radius:var(--radius);padding:10px 12px;
+  font-size:12.5px;color:var(--ink2);margin-bottom:14px;background:var(--surface)}
+.notice b{color:var(--ink)}
+.chart-cap{font-size:12px;color:var(--ink2);min-height:1.2em;margin-top:6px;font-variant-numeric:tabular-nums}
+details.adder{margin-bottom:12px}
+details.adder summary{cursor:pointer;font-weight:600;font-size:14px;color:var(--accent)}
+footer.legal{font-size:11.5px;color:var(--muted);border-top:1px solid var(--grid);
+  margin-top:24px;padding-top:12px}
+footer.legal li{margin-bottom:3px}
+.savewarn{display:none;border:1px solid var(--crit);color:var(--crit);border-radius:8px;
+  padding:8px 12px;font-size:12.5px;margin-bottom:12px}
+@media (min-width:640px){ .kpis{grid-template-columns:repeat(4,1fr)} }
+@media (prefers-reduced-motion: no-preference){
+  .tabs button{transition:border-color .15s,color .15s}
+  .btn{transition:opacity .15s} .btn:hover{opacity:.85}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="app">
+  <h1>Shisha Flip <span style="font-weight:400;color:var(--ink2)">— シーシャ機材 転売管理</span></h1>
+  <p class="tag">仕入れ判断 → 在庫 → 売却 → 月次損益を1つで。データはこの端末に保存（バックアップ推奨）。</p>
+</header>
+
+<div class="savewarn" id="saveWarn">⚠ この環境ではデータを保存できません。作業後は必ず「JSONバックアップ」を保存してください。</div>
+
+<nav class="tabs" id="tabs">
+  <button data-tab="dash" class="on">📊 ダッシュボード</button>
+  <button data-tab="calc">🧮 仕入れ判断</button>
+  <button data-tab="inv">📦 在庫・売上</button>
+  <button data-tab="market">💹 相場メモ</button>
+</nav>
+
+<!-- ============ ダッシュボード ============ -->
+<section id="tab-dash">
+  <div class="kpis" id="kpis"></div>
+
+  <div class="card">
+    <h2>月別の粗利（直近6ヶ月）</h2>
+    <div id="chart"></div>
+    <div class="chart-cap" id="chartCap">バーをタップすると内訳を表示</div>
+    <details style="margin-top:8px">
+      <summary style="font-size:12.5px;color:var(--ink2);cursor:pointer">表で見る</summary>
+      <div class="scroller"><table class="flat" id="monthTable"></table></div>
+    </details>
+  </div>
+
+  <div class="card">
+    <h2>販路別の実績（売却済み）</h2>
+    <div class="scroller"><table class="flat" id="channelTable"></table></div>
+  </div>
+
+  <div class="card">
+    <h2>データ管理</h2>
+    <p class="hint" style="margin:0 0 8px">売却CSVは、福祉事務所への収入申告・確定申告の集計用に使えます。</p>
+    <div class="btnrow">
+      <button class="btn small" id="csvBtn">売却CSVを出力</button>
+      <button class="btn small" id="exportBtn">JSONバックアップ</button>
+      <button class="btn small" id="importBtn">復元（インポート）</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none">
+    </div>
+  </div>
+</section>
+
+<!-- ============ 仕入れ判断 ============ -->
+<section id="tab-calc" hidden>
+  <div class="notice">
+    <b>輸入仕入れ（eBay・海外ショップ）のとき：</b>仕入価格には「商品代＋国際送料＋輸入消費税（約10%）＋関税」を全部含めて入力する。
+    海外から<b>直接</b>仕入れた品の販売は古物商許可の適用外（国内の輸入業者経由はNG）。
+  </div>
+  <div class="card">
+    <h2>この価格で買っていい？</h2>
+    <label>想定売値（円）</label>
+    <input type="number" id="c-sell" inputmode="numeric" placeholder="例: 25000">
+    <div class="row2">
+      <div>
+        <label>販路</label>
+        <select id="c-channel"></select>
+      </div>
+      <div>
+        <label>手数料（%）</label>
+        <input type="number" id="c-fee" inputmode="decimal" step="0.1">
+      </div>
+    </div>
+    <div class="row2">
+      <div>
+        <label>送料・梱包（円）</label>
+        <input type="number" id="c-ship" inputmode="numeric" placeholder="例: 120サイズ 1450">
+      </div>
+      <div>
+        <label>目標利益率（% / 売値比）</label>
+        <input type="number" id="c-target" inputmode="numeric" value="25">
+      </div>
+    </div>
+    <label>仕入れ候補価格（円・任意）</label>
+    <input type="number" id="c-buy" inputmode="numeric" placeholder="出品されている価格">
+    <div class="btnrow">
+      <button class="btn primary" id="c-run">計算する</button>
+      <button class="btn" id="c-toinv" hidden>この条件で在庫に追加 →</button>
+    </div>
+    <div class="result" id="c-result" hidden></div>
+  </div>
+</section>
+
+<!-- ============ 在庫・売上 ============ -->
+<section id="tab-inv" hidden>
+  <details class="adder" id="addBox">
+    <summary>＋ 仕入れた機材を登録</summary>
+    <div class="card" style="margin-top:10px">
+      <div class="row2">
+        <div>
+          <label>種別</label>
+          <select id="i-type">
+            <option value="本体（台）">本体（台）</option>
+            <option value="ハガル（ボウル）">ハガル（ボウル）</option>
+            <option value="HMD">HMD（ヒート管理）</option>
+            <option value="ホース・マウスピース">ホース・マウスピース</option>
+            <option value="アクセサリ・その他">アクセサリ・その他</option>
+            <option value="セット（バラし予定）">セット（バラし予定）</option>
+          </select>
+        </div>
+        <div>
+          <label>状態</label>
+          <select id="i-cond">
+            <option>新品・未使用</option>
+            <option>未使用に近い</option>
+            <option selected>目立った傷や汚れなし</option>
+            <option>やや傷や汚れあり</option>
+            <option>傷や汚れあり</option>
+            <option>ジャンク・要修理</option>
+          </select>
+        </div>
+      </div>
+      <label>ブランド・モデル名</label>
+      <input type="text" id="i-name" placeholder="例: Alpha Hookah Model X / Oblako M">
+      <div class="row3">
+        <div>
+          <label>仕入価格（円）</label>
+          <input type="number" id="i-buy" inputmode="numeric">
+        </div>
+        <div>
+          <label>仕入先</label>
+          <select id="i-source">
+            <option>メルカリ</option><option>ヤフオク</option><option>ラクマ・他フリマ</option>
+            <option>リサイクルショップ</option><option>eBay・海外</option>
+            <option>知人・直接</option><option>その他</option>
+          </select>
+        </div>
+        <div>
+          <label>仕入日</label>
+          <input type="date" id="i-date">
+        </div>
+      </div>
+      <label>メモ（付属品・欠品・洗浄状況など）</label>
+      <input type="text" id="i-note" placeholder="例: ホース欠品→新品付ける / ボトル小チップあり">
+      <div class="btnrow"><button class="btn primary" id="i-add">在庫に追加</button></div>
+    </div>
+  </details>
+
+  <div class="chips" id="invFilter">
+    <button data-f="all" class="on">すべて</button>
+    <button data-f="stock">在庫</button>
+    <button data-f="listed">出品中</button>
+    <button data-f="sold">売却済</button>
+  </div>
+  <div id="invList"></div>
+</section>
+
+<!-- ============ 相場メモ ============ -->
+<section id="tab-market" hidden>
+  <div class="card">
+    <h2>相場メモ（自分の武器データベース）</h2>
+    <p class="hint" style="margin:0 0 10px">初期値は2026年6月調査時点の目安。売り切れ検索・aucfanで実測して自分で育てる。</p>
+    <div class="scroller"><table class="flat" id="marketTable"></table></div>
+    <h3>行を追加</h3>
+    <div class="row2">
+      <div><label>品目（ブランド・モデル）</label><input type="text" id="m-name"></div>
+      <div><label>分類</label>
+        <select id="m-cat"><option>本体</option><option>ハガル</option><option>HMD</option><option>アクセ</option></select>
+      </div>
+    </div>
+    <div class="row3">
+      <div><label>新品参考（円）</label><input type="text" id="m-new" placeholder="30000-35000"></div>
+      <div><label>中古相場（円）</label><input type="text" id="m-used" placeholder="12000-20000"></div>
+      <div><label>回転</label>
+        <select id="m-turn"><option>速い</option><option selected>普通</option><option>遅い</option></select>
+      </div>
+    </div>
+    <label>メモ</label>
+    <input type="text" id="m-note" placeholder="真贋・壊れやすい所・需要層など">
+    <div class="btnrow"><button class="btn primary" id="m-add">追加</button></div>
+  </div>
+</section>
+
+<footer class="legal">
+  <b>⚠ 法律メモ（重要）</b>
+  <ul>
+    <li><b>フレーバー（たばこ）は売らない。</b>無許可販売はたばこ事業法違反（罰金）。ノンニコフレーバーも許可対象とされ、フリマ各社も出品禁止。売るのは機材だけ。</li>
+    <li><b>国内で中古を仕入れて繰り返し売るには古物商許可が必要。</b>破産手続中（復権前）は欠格事由で取得不可 → 免責確定後に申請。</li>
+    <li><b>海外から直接仕入れた品は古物営業法の適用外</b>（eBay等で海外セラーから直接購入）。国内の輸入業者経由で仕入れると許可が必要。</li>
+    <li><b>収入は必ず申告。</b>生活保護受給中は金額に関係なく福祉事務所へ。就職後は副業所得20万円超で確定申告。</li>
+  </ul>
+</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+var KEY="shishaFlip.v1";
+var CHANNELS=[
+  {name:"メルカリ",fee:10},
+  {name:"ヤフーフリマ",fee:5},
+  {name:"ラクマ",fee:10},
+  {name:"ヤフオク",fee:10},
+  {name:"eBay輸出",fee:17},
+  {name:"直販（SNS・知人）",fee:0},
+  {name:"カスタム",fee:10}
+];
+var MARKET_DEFAULTS=[
+ {cat:"本体",name:"Wookah（木製ハイエンド）",n:"60000-80000",u:"25000-45000",t:"遅い",note:"状態命。木部の割れ・匂い確認。海外相場も見る"},
+ {cat:"本体",name:"Steamulation",n:"50000-90000",u:"30000-55000",t:"遅い",note:"独製。パーツ欠けで値が大きく落ちる"},
+ {cat:"本体",name:"Moze Breeze Two",n:"35000-45000",u:"15000-25000",t:"普通",note:"定番人気。カラーで差が出る"},
+ {cat:"本体",name:"Alpha Hookah Model X",n:"30000-35000",u:"12000-20000",t:"速い",note:"国内店舗の定番。需要が安定して読みやすい"},
+ {cat:"本体",name:"Oduman N2 / Micro",n:"7000-15000",u:"4000-8000",t:"速い",note:"ガラス製。チップ・ヒビ必ず確認"},
+ {cat:"本体",name:"KM（ハリルマムーン）",n:"15000-25000",u:"8000-12000",t:"普通",note:"エジプト伝統系。偽物・類似品に注意"},
+ {cat:"本体",name:"ノーブランド・アンティーク台",n:"-",u:"3000-8000",t:"速い",note:"ヤフオク平均5千円前後。部品欠け＝ジャンク値"},
+ {cat:"ハガル",name:"Oblako Phunnel M",n:"3500-4500",u:"2000-3000",t:"速い",note:"定番。小さく送料が安い＝回転勝負に向く"},
+ {cat:"ハガル",name:"国産・作家系ハガル",n:"5000-12000",u:"3000-8000",t:"普通",note:"界隈人気で跳ねる。限定色は強気でOK"},
+ {cat:"HMD",name:"Kaloud Lotus I+ / II",n:"8000-10000",u:"4000-6000",t:"速い",note:"偽物多発ジャンル。刻印・重量で真贋確認"},
+ {cat:"アクセ",name:"ホース・マウスピース",n:"2000-4000",u:"-",t:"-",note:"衛生的に中古は値が付かない。新品交換前提で原価に入れる"}
+];
+var state={inv:[],market:null,seq:1};
+var canSave=true;
+try{ localStorage.setItem("__t","1"); localStorage.removeItem("__t"); }
+catch(e){ canSave=false; document.getElementById("saveWarn").style.display="block"; }
+function load(){
+  if(!canSave) { state.market=MARKET_DEFAULTS.slice(); return; }
+  try{
+    var raw=localStorage.getItem(KEY);
+    if(raw){ var d=JSON.parse(raw); state.inv=d.inv||[]; state.market=d.market||MARKET_DEFAULTS.slice(); state.seq=d.seq||1; }
+    else state.market=MARKET_DEFAULTS.slice();
+  }catch(e){ state.market=MARKET_DEFAULTS.slice(); }
+}
+function save(){ if(!canSave) return; try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){} }
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
+var nf=new Intl.NumberFormat("ja-JP");
+function yen(n){ return "¥"+nf.format(Math.round(n)); }
+function todayStr(){ var d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function ym(dateStr){ return (dateStr||"").slice(0,7); }
+function profitOf(it){
+  if(it.status!=="sold") return null;
+  return (it.soldPrice||0)-Math.round((it.soldPrice||0)*(it.soldFee||0)/100)-(it.soldShip||0)-(it.buy||0);
+}
+
+/* ---------- tabs ---------- */
+var tabs=$("tabs");
+tabs.addEventListener("click",function(e){
+  var b=e.target.closest("button"); if(!b) return;
+  tabs.querySelectorAll("button").forEach(function(x){x.classList.toggle("on",x===b);});
+  ["dash","calc","inv","market"].forEach(function(t){ $("tab-"+t).hidden=(t!==b.dataset.tab); });
+  if(b.dataset.tab==="dash") renderDash();
+});
+
+/* ---------- 仕入れ判断 ---------- */
+var cSel=$("c-channel");
+CHANNELS.forEach(function(c,i){ var o=document.createElement("option"); o.value=i; o.textContent=c.name+"（"+c.fee+"%）"; cSel.appendChild(o); });
+cSel.addEventListener("change",function(){ $("c-fee").value=CHANNELS[cSel.value].fee; });
+$("c-fee").value=CHANNELS[0].fee;
+var lastCalc=null;
+$("c-run").addEventListener("click",function(){
+  var sell=+$("c-sell").value||0, fee=+$("c-fee").value||0, ship=+$("c-ship").value||0,
+      target=+$("c-target").value||0, buy=+$("c-buy").value||0;
+  if(sell<=0){ $("c-result").hidden=false; $("c-result").innerHTML='<span class="hint">想定売値を入力してください。</span>'; return; }
+  var feeAmt=Math.round(sell*fee/100);
+  var net=sell-feeAmt-ship;
+  var maxBuy=Math.max(0,Math.round(net-sell*target/100));
+  var html='<table><tr><td>手数料（'+fee+'%）</td><td>−'+yen(feeAmt)+'</td></tr>'
+    +'<tr><td>送料・梱包</td><td>−'+yen(ship)+'</td></tr>'
+    +'<tr><td>手取り</td><td>'+yen(net)+'</td></tr>'
+    +'<tr><td><b>上限仕入れ価格</b>（利益率'+target+'%確保）</td><td><b>'+yen(maxBuy)+'</b></td></tr></table>';
+  if(buy>0){
+    var gp=net-buy, margin=sell?gp/sell*100:0, roi=buy?gp/buy*100:0;
+    var v,cls,icon;
+    if(roi>=40){v="即買いレベル";cls="v-best";icon="◎";}
+    else if(roi>=25){v="買い";cls="v-ok";icon="○";}
+    else if(roi>=12){v="薄利・回転次第";cls="v-thin";icon="△";}
+    else {v="見送り";cls="v-no";icon="✕";}
+    html+='<table style="margin-top:8px"><tr><td>粗利</td><td>'+yen(gp)+'</td></tr>'
+      +'<tr><td>利益率（売値比）</td><td>'+margin.toFixed(1)+'%</td></tr>'
+      +'<tr><td>ROI（仕入れ比）</td><td>'+roi.toFixed(1)+'%</td></tr></table>'
+      +'<span class="verdict '+cls+'">'+icon+' '+v+'</span>';
+    lastCalc={buy:buy,sell:sell};
+    $("c-toinv").hidden=false;
+  } else { lastCalc=null; $("c-toinv").hidden=true; }
+  $("c-result").hidden=false; $("c-result").innerHTML=html;
+});
+$("c-toinv").addEventListener("click",function(){
+  if(lastCalc){ $("i-buy").value=lastCalc.buy; $("i-date").value=todayStr(); }
+  tabs.querySelector('[data-tab="inv"]').click();
+  $("addBox").open=true; $("i-name").focus();
+});
+
+/* ---------- 在庫 ---------- */
+var invFilterVal="all", openPanel=null;
+$("i-add").addEventListener("click",function(){
+  var name=$("i-name").value.trim();
+  if(!name){ alert("ブランド・モデル名を入力してください"); return; }
+  state.inv.unshift({
+    id:state.seq++, type:$("i-type").value, cond:$("i-cond").value, name:name,
+    buy:+$("i-buy").value||0, source:$("i-source").value, buyDate:$("i-date").value||todayStr(),
+    note:$("i-note").value.trim(), status:"stock", listPrice:0,
+    soldPrice:0, soldChannel:"", soldFee:0, soldShip:0, soldDate:""
+  });
+  save();
+  $("i-name").value=""; $("i-buy").value=""; $("i-note").value="";
+  $("addBox").open=false;
+  renderInv();
+});
+$("invFilter").addEventListener("click",function(e){
+  var b=e.target.closest("button"); if(!b) return;
+  invFilterVal=b.dataset.f;
+  this.querySelectorAll("button").forEach(function(x){x.classList.toggle("on",x===b);});
+  renderInv();
+});
+function daysHeld(it){
+  var end=it.status==="sold"&&it.soldDate?new Date(it.soldDate):new Date();
+  var d=Math.round((end-new Date(it.buyDate))/86400000);
+  return isFinite(d)&&d>=0?d:0;
+}
+function statusBadge(it){
+  if(it.status==="stock") return '<span class="badge st-stock">在庫</span>';
+  if(it.status==="listed") return '<span class="badge st-listed">出品中 '+yen(it.listPrice)+'</span>';
+  return '<span class="badge st-sold">売却済 '+yen(it.soldPrice)+'（'+esc(it.soldChannel)+'）</span>';
+}
+function renderInv(){
+  var list=$("invList"), items=state.inv.filter(function(it){
+    return invFilterVal==="all"||it.status===invFilterVal;
+  });
+  if(!items.length){ list.innerHTML='<div class="empty">まだ登録がありません。「＋ 仕入れた機材を登録」から始めるか、仕入れ判断タブで計算→追加。</div>'; return; }
+  list.innerHTML=items.map(function(it){
+    var p=profitOf(it);
+    var pb=p==null?"":(p>=0?'<span class="badge profit-plus">粗利 +'+nf.format(p)+'円</span>'
+                            :'<span class="badge profit-minus">粗利 −'+nf.format(-p)+'円</span>');
+    var panel="";
+    if(openPanel&&openPanel.id===it.id){
+      if(openPanel.mode==="list"){
+        panel='<div class="panel"><label>出品価格（円）</label><input type="number" id="p-list" inputmode="numeric" value="'+(it.listPrice||"")+'">'
+          +'<div class="btnrow"><button class="btn primary small" data-act="do-list" data-id="'+it.id+'">出品中にする</button>'
+          +'<button class="btn small" data-act="close">閉じる</button></div></div>';
+      } else if(openPanel.mode==="sell"){
+        var opts=CHANNELS.map(function(c){return '<option value="'+c.fee+'">'+c.name+"（"+c.fee+"%）</option>";}).join("");
+        panel='<div class="panel"><div class="row3">'
+          +'<div><label>売値（円）</label><input type="number" id="p-sold" inputmode="numeric" value="'+(it.listPrice||"")+'"></div>'
+          +'<div><label>販路</label><select id="p-ch">'+opts+'</select></div>'
+          +'<div><label>手数料%</label><input type="number" id="p-fee" step="0.1" value="10"></div></div>'
+          +'<div class="row2"><div><label>送料・梱包（円）</label><input type="number" id="p-ship" inputmode="numeric" value="0"></div>'
+          +'<div><label>売却日</label><input type="date" id="p-date" value="'+todayStr()+'"></div></div>'
+          +'<div class="btnrow"><button class="btn primary small" data-act="do-sell" data-id="'+it.id+'">売却を記録</button>'
+          +'<button class="btn small" data-act="close">閉じる</button></div></div>';
+      } else if(openPanel.mode==="edit"){
+        panel='<div class="panel"><label>名前</label><input type="text" id="p-name" value="'+esc(it.name)+'">'
+          +'<div class="row2"><div><label>仕入価格</label><input type="number" id="p-buy" value="'+it.buy+'"></div>'
+          +'<div><label>仕入日</label><input type="date" id="p-bdate" value="'+esc(it.buyDate)+'"></div></div>'
+          +'<label>メモ</label><input type="text" id="p-note" value="'+esc(it.note)+'">'
+          +'<div class="btnrow"><button class="btn primary small" data-act="do-edit" data-id="'+it.id+'">保存</button>'
+          +'<button class="btn small" data-act="close">閉じる</button></div></div>';
+      }
+    }
+    return '<div class="item">'
+      +'<div class="top"><span class="name">'+esc(it.name)+'</span><span class="price">仕入 '+yen(it.buy)+'</span></div>'
+      +'<div class="badges"><span class="badge">'+esc(it.type)+'</span><span class="badge">'+esc(it.cond)+'</span>'+statusBadge(it)+pb+'</div>'
+      +'<div class="meta">'+esc(it.source)+' / '+esc(it.buyDate)+' / 保有'+daysHeld(it)+'日'+(it.note?' / '+esc(it.note):"")+'</div>'
+      +'<div class="acts">'
+      +(it.status==="stock"?'<button class="btn small" data-act="list" data-id="'+it.id+'">出品する</button>':"")
+      +(it.status!=="sold"?'<button class="btn small" data-act="sell" data-id="'+it.id+'">売却を記録</button>':"")
+      +'<button class="btn small" data-act="edit" data-id="'+it.id+'">編集</button>'
+      +'<button class="btn small danger" data-act="del" data-id="'+it.id+'">削除</button>'
+      +'</div>'+panel+'</div>';
+  }).join("");
+}
+$("invList").addEventListener("click",function(e){
+  var b=e.target.closest("button"); if(!b) return;
+  var act=b.dataset.act, id=+b.dataset.id;
+  var it=state.inv.find(function(x){return x.id===id;});
+  if(act==="close"){ openPanel=null; renderInv(); return; }
+  if(act==="list"||act==="sell"||act==="edit"){ openPanel={id:id,mode:act}; renderInv(); return; }
+  if(act==="del"){ if(confirm("削除しますか？")){ state.inv=state.inv.filter(function(x){return x.id!==id;}); openPanel=null; save(); renderInv(); } return; }
+  if(act==="do-list"&&it){ it.listPrice=+$("p-list").value||0; it.status="listed"; openPanel=null; save(); renderInv(); return; }
+  if(act==="do-sell"&&it){
+    it.soldPrice=+$("p-sold").value||0;
+    var sel=$("p-ch"); it.soldChannel=sel.options[sel.selectedIndex].text.split("（")[0];
+    it.soldFee=+$("p-fee").value||0; it.soldShip=+$("p-ship").value||0;
+    it.soldDate=$("p-date").value||todayStr(); it.status="sold";
+    openPanel=null; save(); renderInv(); return;
+  }
+  if(act==="do-edit"&&it){
+    it.name=$("p-name").value.trim()||it.name; it.buy=+$("p-buy").value||0;
+    it.buyDate=$("p-bdate").value||it.buyDate; it.note=$("p-note").value.trim();
+    openPanel=null; save(); renderInv(); return;
+  }
+});
+document.addEventListener("change",function(e){
+  if(e.target&&e.target.id==="p-ch"){ $("p-fee").value=e.target.value; }
+});
+
+/* ---------- 相場メモ ---------- */
+function renderMarket(){
+  var t=$("marketTable");
+  var head='<tr><th>分類</th><th>品目</th><th class="num">新品参考</th><th class="num">中古相場</th><th>回転</th><th>メモ</th><th></th></tr>';
+  t.innerHTML=head+state.market.map(function(m,i){
+    return '<tr><td>'+esc(m.cat)+'</td><td><b>'+esc(m.name)+'</b></td><td class="num">'+esc(m.n)+'</td>'
+      +'<td class="num">'+esc(m.u)+'</td><td>'+esc(m.t)+'</td><td style="min-width:140px">'+esc(m.note)+'</td>'
+      +'<td><button class="btn small danger" data-mdel="'+i+'">×</button></td></tr>';
+  }).join("");
+}
+$("marketTable").addEventListener("click",function(e){
+  var b=e.target.closest("button"); if(!b||b.dataset.mdel==null) return;
+  state.market.splice(+b.dataset.mdel,1); save(); renderMarket();
+});
+$("m-add").addEventListener("click",function(){
+  var name=$("m-name").value.trim(); if(!name){alert("品目を入力してください");return;}
+  state.market.push({cat:$("m-cat").value,name:name,n:$("m-new").value.trim()||"-",
+    u:$("m-used").value.trim()||"-",t:$("m-turn").value,note:$("m-note").value.trim()});
+  $("m-name").value="";$("m-new").value="";$("m-used").value="";$("m-note").value="";
+  save(); renderMarket();
+});
+
+/* ---------- ダッシュボード ---------- */
+function monthKeyList(n){
+  var out=[],d=new Date(); d.setDate(1);
+  for(var i=n-1;i>=0;i--){ var x=new Date(d.getFullYear(),d.getMonth()-i,1);
+    out.push(x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")); }
+  return out;
+}
+function stats(){
+  var sold=state.inv.filter(function(x){return x.status==="sold";});
+  var months=monthKeyList(6), map={};
+  months.forEach(function(m){map[m]={p:0,c:0};});
+  var total=0, roiSum=0, roiN=0, channels={};
+  sold.forEach(function(it){
+    var p=profitOf(it); total+=p;
+    var k=ym(it.soldDate); if(map[k]){map[k].p+=p;map[k].c++;}
+    if(it.buy>0){ roiSum+=p/it.buy; roiN++; }
+    var ch=it.soldChannel||"不明";
+    channels[ch]=channels[ch]||{p:0,c:0}; channels[ch].p+=p; channels[ch].c++;
+  });
+  var stock=state.inv.filter(function(x){return x.status!=="sold";});
+  var stockCost=stock.reduce(function(s,x){return s+(x.buy||0);},0);
+  var cur=months[5],prev=months[4];
+  return {months:months,map:map,total:total,curP:map[cur].p,prevP:map[prev].p,
+    stockN:stock.length,stockCost:stockCost,avgRoi:roiN?roiSum/roiN*100:null,channels:channels,soldN:sold.length};
+}
+function renderDash(){
+  var s=stats();
+  var delta=s.curP-s.prevP;
+  var deltaHtml=s.prevP||s.curP
+    ? (delta>=0?'<span class="up">▲ '+yen(delta)+'</span>':'<span class="down">▼ '+yen(-delta)+'</span>')+' <span style="color:var(--muted)">前月比</span>'
+    : '<span style="color:var(--muted)">—</span>';
+  $("kpis").innerHTML=
+    '<div class="kpi"><div class="lbl">今月の粗利</div><div class="val">'+yen(s.curP)+'</div><div class="sub">'+deltaHtml+'</div></div>'
+    +'<div class="kpi"><div class="lbl">累計粗利</div><div class="val">'+yen(s.total)+'</div><div class="sub">売却 '+s.soldN+'件</div></div>'
+    +'<div class="kpi"><div class="lbl">在庫</div><div class="val">'+s.stockN+'<span style="font-size:13px;font-weight:400"> 点</span></div><div class="sub">仕入総額 '+yen(s.stockCost)+'</div></div>'
+    +'<div class="kpi"><div class="lbl">平均ROI（売却済）</div><div class="val">'+(s.avgRoi==null?"—":s.avgRoi.toFixed(0)+"%")+'</div><div class="sub">目標 40%</div></div>';
+  renderChart(s);
+  var mt='<tr><th>月</th><th class="num">粗利</th><th class="num">件数</th></tr>';
+  s.months.forEach(function(m){ mt+='<tr><td>'+m+'</td><td class="num">'+yen(s.map[m].p)+'</td><td class="num">'+s.map[m].c+'</td></tr>'; });
+  $("monthTable").innerHTML=mt;
+  var chKeys=Object.keys(s.channels);
+  $("channelTable").innerHTML=chKeys.length
+    ? '<tr><th>販路</th><th class="num">粗利</th><th class="num">件数</th><th class="num">平均粗利</th></tr>'
+      +chKeys.sort(function(a,b){return s.channels[b].p-s.channels[a].p;}).map(function(k){
+        var c=s.channels[k];
+        return '<tr><td>'+esc(k)+'</td><td class="num">'+yen(c.p)+'</td><td class="num">'+c.c+'</td><td class="num">'+yen(c.p/c.c)+'</td></tr>';
+      }).join("")
+    : '<tr><td class="empty" style="border:0">売却データがまだありません</td></tr>';
+}
+function renderChart(s){
+  var vals=s.months.map(function(m){return s.map[m].p;});
+  var hasData=vals.some(function(v){return v!==0;});
+  if(!hasData){ $("chart").innerHTML='<div class="empty">売却を記録すると、ここに月別の粗利が表示されます。</div>'; $("chartCap").textContent=""; return; }
+  var W=340,H=150,padL=8,padR=8,padT=16,padB=22;
+  var maxV=Math.max.apply(null,vals.concat([1])), minV=Math.min.apply(null,vals.concat([0]));
+  var span=maxV-minV||1;
+  var plotH=H-padT-padB, plotW=W-padL-padR;
+  function y(v){ return padT+plotH*(1-(v-minV)/span); }
+  var zeroY=y(0);
+  var n=vals.length, slot=plotW/n, bw=Math.min(26,slot*0.55);
+  var grid="", labels="", bars="";
+  [maxV,(maxV+minV)/2].forEach(function(gv){
+    grid+='<line x1="'+padL+'" x2="'+(W-padR)+'" y1="'+y(gv)+'" y2="'+y(gv)+'" stroke="var(--grid)" stroke-width="1"/>';
+  });
+  var maxIdx=vals.indexOf(Math.max.apply(null,vals));
+  vals.forEach(function(v,i){
+    var cx=padL+slot*i+slot/2, x0=cx-bw/2;
+    var barTop=v>=0?y(v):zeroY, barH=Math.max(2,Math.abs(y(v)-zeroY));
+    var r=Math.min(4,bw/2,barH);
+    var d= v>=0
+      ? "M"+x0+","+(barTop+barH)+" v"+(-(barH-r))+" a"+r+","+r+" 0 0 1 "+r+","+(-r)+" h"+(bw-2*r)+" a"+r+","+r+" 0 0 1 "+r+","+r+" v"+(barH-r)+" z"
+      : "M"+x0+","+barTop+" v"+(barH-r)+" a"+r+","+r+" 0 0 0 "+r+","+r+" h"+(bw-2*r)+" a"+r+","+r+" 0 0 0 "+r+","+(-r)+" v"+(-(barH-r))+" z";
+    var col=v>=0?"var(--accent)":"var(--neg)";
+    bars+='<path d="'+d+'" fill="'+col+'" data-i="'+i+'" style="cursor:pointer"><title>'+s.months[i]+": "+yen(v)+"（"+s.map[s.months[i]].c+"件）</title></path>";
+    labels+='<text x="'+cx+'" y="'+(H-6)+'" text-anchor="middle" font-size="9.5" fill="var(--muted)">'+s.months[i].slice(5)+"月</text>";
+    if(i===maxIdx||i===n-1){
+      labels+='<text x="'+cx+'" y="'+((v>=0?barTop:barTop+barH)+(v>=0?-4:11))+'" text-anchor="middle" font-size="9.5" font-weight="600" fill="var(--ink2)" style="font-variant-numeric:tabular-nums">'+nf.format(v)+"</text>";
+    }
+  });
+  var base='<line x1="'+padL+'" x2="'+(W-padR)+'" y1="'+zeroY+'" y2="'+zeroY+'" stroke="var(--baseline)" stroke-width="1"/>';
+  $("chart").innerHTML='<svg viewBox="0 0 '+W+" "+H+'" role="img" aria-label="月別粗利の棒グラフ" style="width:100%;height:auto;display:block">'+grid+base+bars+labels+"</svg>";
+  $("chart").querySelectorAll("path").forEach(function(p){
+    p.addEventListener("pointerenter",cap); p.addEventListener("pointerdown",cap);
+    function cap(){ var i=+p.dataset.i,m=s.months[i];
+      $("chartCap").textContent=m+"： 粗利 "+yen(s.map[m].p)+"（"+s.map[m].c+"件）"; }
+  });
+  $("chartCap").textContent="バーをタップすると内訳を表示";
+}
+
+/* ---------- CSV / backup ---------- */
+function download(name,content,mime){
+  var a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([content],{type:mime}));
+  a.download=name; a.click(); setTimeout(function(){URL.revokeObjectURL(a.href);},500);
+}
+$("csvBtn").addEventListener("click",function(){
+  var rows=[["売却日","種別","品名","状態","仕入価格","仕入先","仕入日","売値","販路","手数料%","送料","粗利","保有日数"]];
+  state.inv.filter(function(x){return x.status==="sold";}).forEach(function(it){
+    rows.push([it.soldDate,it.type,it.name,it.cond,it.buy,it.source,it.buyDate,
+      it.soldPrice,it.soldChannel,it.soldFee,it.soldShip,profitOf(it),daysHeld(it)]);
+  });
+  var csv="﻿"+rows.map(function(r){
+    return r.map(function(c){ c=String(c==null?"":c); return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c; }).join(",");
+  }).join("\n");
+  download("shisha-sales-"+todayStr()+".csv",csv,"text/csv");
+});
+$("exportBtn").addEventListener("click",function(){
+  download("shisha-flip-backup-"+todayStr()+".json",JSON.stringify(state,null,1),"application/json");
+});
+$("importBtn").addEventListener("click",function(){ $("importFile").click(); });
+$("importFile").addEventListener("change",function(){
+  var f=this.files[0]; if(!f) return;
+  var r=new FileReader();
+  r.onload=function(){
+    try{
+      var d=JSON.parse(r.result);
+      if(!d||!Array.isArray(d.inv)) throw 0;
+      state=d; state.market=state.market||MARKET_DEFAULTS.slice(); state.seq=state.seq||(state.inv.length+1);
+      save(); renderInv(); renderMarket(); renderDash();
+      alert("復元しました（"+state.inv.length+"件）");
+    }catch(e){ alert("読み込めませんでした。Shisha FlipのバックアップJSONを選んでください。"); }
+  };
+  r.readAsText(f);
+});
+
+/* ---------- init ---------- */
+load();
+$("i-date").value=todayStr();
+renderInv(); renderMarket(); renderDash();
+})();
+</script>
+</body>
+</html>
