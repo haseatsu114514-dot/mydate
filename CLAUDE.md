@@ -56,6 +56,7 @@
 | [life/tasks.md](life/tasks.md) | やらなきゃいけないことリスト |
 | [goals/current.md](goals/current.md) | 現在の目標（短期・長期） |
 | [summary/insights.md](summary/insights.md) | スキル分析・行動パターン・アクション計画 |
+| [health/doctor-note.md](health/doctor-note.md) | 診察時に医師へ渡すメモ（口頭で説明せず持参する用） |
 
 ---
 
